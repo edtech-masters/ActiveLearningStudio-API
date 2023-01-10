@@ -211,9 +211,12 @@ class LmsController extends Controller
      */
     public function teams(TeamsSearchRequest $request)
     {
-        $verifyValidCall = LmsSetting::where('lti_client_id', $request->lti_client_id)->where('lms_login_id', 'ilike', $request->user_email)->count();
-        if ($verifyValidCall) {
+        $lmsSetting = LmsSetting::where('lti_client_id', $request->lti_client_id)->where('lms_login_id', 'ilike', $request->user_email)->first();
+        if ($lmsSetting) {
             $user = User::where('email', $request->input('user_email'))->first();
+            if (!$user) {
+                $user = User::where('id', $lmsSetting->user_id)->first();
+            }
             $teams = TeamResource::collection($user->teams()->get());
 
             return response([
