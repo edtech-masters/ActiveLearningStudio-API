@@ -28,7 +28,7 @@ class Lesson
         $lmsHost = $this->lmsSetting->lms_url;
         $webServiceURL = $lmsHost . "/wp-json/wp/v2/tl_lesson";
         $requestParams = [
-            "title" => $playlist->title . ($data['counter'] > 0 ? ' (' .$data['counter'] . ')' : ''),
+            "title" => $playlist->title,
             "status" => "publish",
             "tl_lesson_tag" => $tagsArray,
             'meta' => array(
@@ -37,7 +37,7 @@ class Lesson
                 'lti_tool_url' => config('constants.curriki-tsugi-host') . "?playlist=" . $playlist->id,
                 'lti_tool_code' => $this->lmsSetting->lti_client_id,
                 'lti_custom_attr' =>  'custom=activity='. $playlist->id,
-                "lti_content_title" => $playlist->title . ($data['counter'] > 0 ? ' (' .$data['counter'] . ')' : ''),
+                "lti_content_title" => $playlist->title,
                 "lti_post_attr_id" => uniqid(),
                 "lti_course_id" =>  $playlist->project->id,
                 "activities" => $activities
