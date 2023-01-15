@@ -19,6 +19,12 @@ class Lesson
 
     public function send(PlaylistModel $playlist, $course_id, $data, $tagsArray)
     { 
+        $playlistActivities = [];
+        foreach($playlist->activities->toArray() as $activity) {
+            $playlistActivities[] = ['id' => $activity["id"], 'title' => $activity["title"]];
+        }
+        $activities =  htmlentities(json_encode($playlistActivities)); 
+        
         $lmsHost = $this->lmsSetting->lms_url;
         $webServiceURL = $lmsHost . "/wp-json/wp/v2/tl_lesson";
         $requestParams = [
@@ -33,7 +39,8 @@ class Lesson
                 'lti_custom_attr' =>  'custom=activity='. $playlist->id,
                 "lti_content_title" => $playlist->title . ($data['counter'] > 0 ? ' (' .$data['counter'] . ')' : ''),
                 "lti_post_attr_id" => uniqid(),
-                "lti_course_id" =>  $playlist->project->id
+                "lti_course_id" =>  $playlist->project->id,
+                "activities" => $activities
             ),
         ];
         $response = $this->client->request('POST', $webServiceURL, [
