@@ -412,13 +412,13 @@ class PublishController extends Controller
             $counter = (isset($data['counter']) ? intval($data['counter']) : 0);
             $lesson = new WordPressLesson($lmsSetting);
             $response = $lesson->send($playlist, $courseId, ['counter' => intval($counter)], $tagsArray);
-            $code = $response->getStatusCode();
-            if ($code == 200 || $code == 201 ) {
+            if ($response && ($response->getStatusCode() == 200 || $response->getStatusCode() == 201)) {
                 $outcome = $response->getBody()->getContents();
                 return response([
                     'data' => $outcome,
                 ], 200);
             }
+            
             return response([
                 'errors' => ['Failed to send playlist to Wordpress.'],
             ], 500);
