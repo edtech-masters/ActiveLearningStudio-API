@@ -19,36 +19,31 @@ class Lesson
 
     public function send(PlaylistModel $playlist, $course_id, $data, $tagsArray)
     { 
-        $playlistActivities = [];
-        foreach($playlist->activities->toArray() as $activity) {
-            $playlistActivities[] = ['id' => $activity["id"], 'title' => $activity["title"]];
+        foreach($playlist->activities->toArray() as $activity) {      
+            $lmsHost = $this->lmsSetting->lms_url;
+            $webServiceURL = $lmsHost . "/wp-json/wp/v2/tl_lesson";
+            $requestParams = [
+                "title" => $activity["title"],
+                "status" => "publish",
+                "tl_lesson_tag" => $tagsArray,
+                'meta' => array(
+                    'lti_content_id' => $playlist->id,
+                    'tl_course_id' => $course_id,
+                    'lti_tool_url' => config('constants.curriki-tsugi-host') . "?activity=" . $activity["id"],
+                    'lti_tool_code' => $this->lmsSetting->lti_client_id,
+                    'lti_custom_attr' =>  'custom=activity='. $activity["id"],
+                    "lti_content_title" => $playlist->title,
+                    "lti_post_attr_id" => uniqid(),
+                    "lti_course_id" =>  $playlist->project->id
+                ),
+            ];
+            $response = $this->client->request('POST', $webServiceURL, [
+            'headers' => [
+                'Authorization' => "Basic  " . $this->lmsAuthToken 
+            ],
+                'json' => $requestParams
+            ]);
         }
-        $activities =  htmlentities(json_encode($playlistActivities)); 
-        
-        $lmsHost = $this->lmsSetting->lms_url;
-        $webServiceURL = $lmsHost . "/wp-json/wp/v2/tl_lesson";
-        $requestParams = [
-            "title" => $playlist->title,
-            "status" => "publish",
-            "tl_lesson_tag" => $tagsArray,
-            'meta' => array(
-                'lti_content_id' => $playlist->id,
-                'tl_course_id' => $course_id,
-                'lti_tool_url' => config('constants.curriki-tsugi-host') . "?playlist=" . $playlist->id,
-                'lti_tool_code' => $this->lmsSetting->lti_client_id,
-                'lti_custom_attr' =>  'custom=activity='. $playlist->id,
-                "lti_content_title" => $playlist->title,
-                "lti_post_attr_id" => uniqid(),
-                "lti_course_id" =>  $playlist->project->id,
-                "activities" => $activities
-            ),
-        ];
-        $response = $this->client->request('POST', $webServiceURL, [
-        'headers' => [
-            'Authorization' => "Basic  " . $this->lmsAuthToken 
-        ],
-        'json' => $requestParams
-        ]);
         return $response;
     }
 
