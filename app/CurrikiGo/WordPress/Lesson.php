@@ -19,7 +19,7 @@ class Lesson
 
     public function send(PlaylistModel $playlist, $course_id, $data, $tagsArray)
     { 
-        foreach($playlist->activities->toArray() as $activity) {      
+        foreach($playlist->activities->sortByDesc('order')->toArray() as $activity) {      
             $lmsHost = $this->lmsSetting->lms_url;
             $webServiceURL = $lmsHost . "/wp-json/wp/v2/tl_lesson";
             $requestParams = [
