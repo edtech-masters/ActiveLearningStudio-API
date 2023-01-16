@@ -417,11 +417,11 @@ class PublishController extends Controller
                 return response([
                     'data' => $outcome,
                 ], 200);
+            } else {
+                return response([
+                    'data' => "",
+                ], 200);
             }
-            
-            return response([
-                'errors' => ['Failed to send playlist to Wordpress.'],
-            ], 500);
         }
 
         return response([
