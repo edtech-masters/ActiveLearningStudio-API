@@ -22,6 +22,22 @@ class H5PAddMemoryGameToCpSemanticsSeeder extends Seeder
             ]);
         }
 
+        // add editor dependencies
+        $h5pEditorCoursePresentationParams = ['name' => "H5PEditor.CoursePresentation", "major_version" => 1, "minor_version" => 24];
+        $h5pEditorCoursePresentationParamsLib = DB::table('h5p_libraries')->where($h5pEditorCoursePresentationParams)->first();
+        $h5pEditorCoursePresentationParamsLibId = $h5pEditorCoursePresentationParamsLib->id;
+
+        $h5pMemoryGameLibParams = ['name' => "H5P.MemoryGame", "major_version" =>  1, "minor_version" => 3];
+        $h5pMemoryGameLib = DB::table('h5p_libraries')->where($h5pMemoryGameLibParams)->first();
+        $h5pMemoryGameId = $h5pMemoryGameLib->id;
+
+        DB::table('h5p_libraries_libraries')->insert([
+            [
+                'library_id' => $h5pEditorCoursePresentationParamsLibId,
+                'required_library_id' => $h5pMemoryGameId,
+                'dependency_type' => 'preloaded'
+            ],
+        ]);
 
     }
 
