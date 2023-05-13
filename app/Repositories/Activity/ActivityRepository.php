@@ -850,4 +850,16 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
     }
 
 
+    public function searchByH5pKeyword($keyword, $perPage)
+    {
+        if (isset($keyword)) {
+            return $this->model
+                ->withWhereHas('h5p_content', function ($query) use($keyword) {
+                    $query->whereRaw("jsonb_array_length(jsonb_path_query_array(content_keywords , '$[*] ? (@.keywords[*] like_regex \"(?i)$keyword\")')) > 0");
+                })
+                ->paginate($perPage);
+        } else {
+            return $this->model->with('h5p_content')->paginate($perPage);
+        }
+    }
 }

@@ -421,7 +421,7 @@ class LaravelH5pRepository implements H5PFrameworkInterface
      */
     public function updateContent($content, $contentMainId = NULL)
     {
-        $user = Auth::user();        
+        $user = Auth::user();
         $current_date = date('Y-m-d H:i:s');
         $metadata = (array)$content['metadata'];
         $table = 'h5p_contents';
@@ -436,6 +436,11 @@ class LaravelH5pRepository implements H5PFrameworkInterface
             'disable' => $content['disable']
         ));
 
+        $machineName = $content['library']['machineName'];
+        if ( $machineName == 'H5P.CoursePresentation') {
+            $contentKeywords = $this->getContentKeywords($content);
+            $data['content_keywords'] = $contentKeywords;
+        }
         if (!isset($content['id'])) {
             // Insert new content
             $data['created_at'] = $current_date;;
@@ -488,7 +493,7 @@ class LaravelH5pRepository implements H5PFrameworkInterface
         if ($isLibrary) {
             $whitelist .= ' ' . $defaultLibraryWhitelist;
         }
-        
+
         $whitelistArr = explode(' ', $whitelist);
         $whitelistCapitalized = array_map(function($ext) { return strtoupper($ext); }, $whitelistArr);
         $whitelistFinalArr = array_merge($whitelistArr, $whitelistCapitalized, ['html','htm','HTML','HTM', 'yml', 'YML']);
@@ -1239,5 +1244,31 @@ class LaravelH5pRepository implements H5PFrameworkInterface
     public function getLibraryConfig($libraries = NULL)
     {
         return [];
+    }
+
+    public function getContentKeywords(array $content)
+    {
+        $contentKeywords = array();
+        $params = json_decode($content['params']);
+        $slides = $params->presentation->slides;
+        foreach ($slides as $index => $slide) {
+            if (property_exists($slide, 'keywords')) {
+                $keywords = $slide->keywords;
+                $keywordsArray = array();
+                foreach ($keywords as $keyword) {
+                    $mainText = $keyword->main;
+                    $textArray  = explode(',', $mainText);
+                    $keywordsArray = array_merge($keywordsArray, $textArray);
+                }
+                $contentKeyword = array(
+                    'slideIndex' => $index,
+                    'keywords' => $keywordsArray
+                );
+                $contentKeywords[] = $contentKeyword;
+            }
+        }
+
+        return $contentKeywords;
+
     }
 }

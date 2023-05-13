@@ -87,4 +87,11 @@ interface ActivityRepositoryInterface extends EloquentRepositoryInterface
      * @return mixed
      */
     public function getStandAloneActivities($organization_id, $data);
+
+    /**
+     * search by h5p keyword
+     * @param $keyword
+     * @return mixed
+     */
+    public function searchByH5pKeyword($keyword, $perPage);
 }
