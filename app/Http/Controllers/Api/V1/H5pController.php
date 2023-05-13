@@ -758,4 +758,24 @@ class H5pController extends Controller
         }
         return response()->json($request->all());
     }
+
+    public function coursePresentation(Activity $activity) {
+        $content = H5pContent::findOrFail($activity->h5p_content->id);
+        if ($content && $content->library->name === 'H5P.CoursePresentation') {
+            $slides = array();
+            $parameters = json_decode($content->parameters);
+            foreach ($parameters->presentation->slides as $parameter_slide) {
+                $slide = null;
+                if (property_exists($parameter_slide, 'elements')) {
+                    $slide = true;
+                }
+                array_push($slides, $slide);
+            }
+            return response()->json($slides);
+        } else {
+            return response([
+                'fail' => 'Not a CoursePresentation'
+            ], 400);
+        }
+    }
 }

@@ -395,6 +395,8 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
 
     Route::get('error', 'ErrorController@show')->name('api/error');
 
+    Route::any('activities/{activity}/h5p/cp', 'H5pController@coursePresentation');
+
     /*********************** ADMIN PANEL ROUTES ************************/
     Route::group([
         'prefix' => 'admin',
