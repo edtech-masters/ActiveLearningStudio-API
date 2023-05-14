@@ -22,6 +22,7 @@ use App\Repositories\Activity\ActivityRepositoryInterface;
 use App\Repositories\ActivityItem\ActivityItemRepositoryInterface;
 use App\Repositories\Playlist\PlaylistRepositoryInterface;
 use App\Repositories\H5pContent\H5pContentRepositoryInterface;
+use Djoudi\LaravelH5p\Eloquents\H5pContent;
 use Djoudi\LaravelH5p\Events\H5pEvent;
 use Djoudi\LaravelH5p\Exceptions\H5PException;
 use Illuminate\Http\Request;
@@ -319,12 +320,12 @@ class ActivityController extends Controller
 
     /**
      * Update H5P
-     * 
+     *
      * Update H5P content
      *
      * @param $request
      * @param int $id
-     * 
+     *
      * @return mixed
      * @throws H5PException
      */
@@ -600,7 +601,7 @@ class ActivityController extends Controller
 
     /**
      * H5P Activity
-     * 
+     *
      * Get H5P Activity details
      *
      * @urlParam activity required The Id of a activity Example: 1
@@ -796,6 +797,71 @@ class ActivityController extends Controller
             'activity' => new ActivityResource($activity),
             'playlist' => new PlaylistResource($activity->playlist),
         ], 200);
+    }
+
+    /**
+     * Migrate h5p keywords
+     */
+    public function migrateH5pKeyWords()
+    {
+        foreach (H5pContent::cursor() as $h5pContent) {
+            $record = $this->h5pContentRepository->getLibrary($h5pContent->id);
+            $library = $record->library;
+            $libraryName = $library->name;
+
+            if ($libraryName == 'H5P.CoursePresentation') {
+                $h5p = App::make('LaravelH5p');
+                $interface = $h5p::$interface;
+                $contentKeywords = $interface->getContentKeywords(array('params' => $h5pContent->parameters));
+                $this->h5pContentRepository->update(
+                    array(
+                        'content_keywords' => $contentKeywords
+                    ),
+                    $h5pContent->id
+                );
+            }
+        }
+    }
+
+    public function searchH5pKeyword(Request $request) {
+        $keyword = $request->query('keyword');
+        $perPage = isset($request['size']) ? $request['size'] : config('constants.default-pagination-per-page');
+        $response = $this->activityRepository->searchByH5pKeyword($keyword, $perPage);
+        $this->updateContentKeywords($response->items(), $keyword);
+        return response([
+            'activities' => $response,
+            'searchKeyword' => $keyword
+        ]);
+    }
+
+    private function updateContentKeywords($activities, $searchKeyword)
+    {
+        foreach ($activities as $activity) {
+            if (isset($activity['h5p_content']) && isset($activity['h5p_content']['content_keywords'])) {
+                $contentKeywords = $activity['h5p_content']['content_keywords'];
+                if (!empty($contentKeywords)) {
+                    $slideNumbers = array();
+                    foreach (json_decode($contentKeywords) as $contentKeyword) {
+                        $keywords = $contentKeyword->keywords;
+                        $matched = false;
+                        foreach ($keywords as $keyword) {
+                            if (preg_match("/$searchKeyword/i", $keyword)) {
+                                $matched = true;
+                                break;
+                            }
+                        }
+
+                        if ($matched) {
+                            $slideNumbers[] = $contentKeyword->slideIndex;
+                        }
+                    }
+                    if (!empty($slideNumbers)) {
+                        $activity['h5p_content']['matching_slides'] = $slideNumbers;
+                    }
+                }
+            }
+        }
+
     }
 }
 
