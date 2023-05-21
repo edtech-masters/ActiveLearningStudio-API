@@ -764,12 +764,12 @@ class H5pController extends Controller
         if ($content && $content->library->name === 'H5P.CoursePresentation') {
             $slides = array();
             $parameters = json_decode($content->parameters);
-            foreach ($parameters->presentation->slides as $parameter_slide) {
+            foreach ($parameters->presentation->slides as $key => $parameter_slide) {
                 $slide = null;
                 if (property_exists($parameter_slide, 'elements')) {
-                    $slide = true;
+                    $slide = array("slide" => ($key + 1), "hasInteractions" => true, "title" => $parameter_slide->elements[0]->action->metadata->title, "type" => $parameter_slide->elements[0]->action->metadata->contentType);
+                    array_push($slides, $slide);
                 }
-                array_push($slides, $slide);
             }
             return response()->json($slides);
         } else {
