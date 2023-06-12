@@ -705,6 +705,10 @@ class H5pController extends Controller
 
     public function contentUserData(Request $request)
     {
+        if ($request->get('skipSave') == 1) {
+            return response()->json(["data" => 'save skipped', "success" => true]);
+        }
+
         $contentId =$request->get('content_id');
         $dataId =$request->get('data_type');
         $subContentId =$request->get('sub_content_id');
