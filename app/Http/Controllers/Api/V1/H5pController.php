@@ -775,7 +775,10 @@ class H5pController extends Controller
                     array_push($slides, $slide);
                 }
             }
-            return response()->json($slides);
+            return response()->json(array(
+                "slides" => $slides, 
+                "data" => array("totalSlides" => count($parameters->presentation->slides) + 1)
+            ));
         } else {
             return response([
                 'fail' => 'Not a CoursePresentation'
