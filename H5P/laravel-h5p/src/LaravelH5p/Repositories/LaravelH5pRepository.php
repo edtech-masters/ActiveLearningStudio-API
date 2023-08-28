@@ -439,7 +439,9 @@ class LaravelH5pRepository implements H5PFrameworkInterface
         $machineName = $content['library']['machineName'];
         if ( $machineName == 'H5P.CoursePresentation') {
             $contentKeywords = $this->getContentKeywords($content);
-            $data['content_keywords'] = $contentKeywords;
+            if (!empty($contentKeywords)) {
+                $data['content_keywords'] = $contentKeywords;
+            }
         }
         if (!isset($content['id'])) {
             // Insert new content
@@ -1252,7 +1254,7 @@ class LaravelH5pRepository implements H5PFrameworkInterface
         $params = json_decode($content['params']);
         $slides = $params->presentation->slides;
         foreach ($slides as $index => $slide) {
-            if (property_exists($slide, 'keywords')) {
+            if (property_exists($slide, 'keywords') && count($slide->keywords) > 0) {
                 $keywords = $slide->keywords;
                 $keywordsArray = array();
                 foreach ($keywords as $keyword) {
