@@ -772,6 +772,13 @@ class H5pController extends Controller
                 $slide = null;
                 if (property_exists($parameter_slide, 'elements')) {
                     $slide = array("slide" => ($key + 1), "hasInteractions" => true, "title" => $parameter_slide->elements[0]->action->metadata->title, "type" => $parameter_slide->elements[0]->action->metadata->contentType);
+                    if (property_exists($parameter_slide, 'gradedManually') && property_exists($parameter_slide, 'totalGrades')) {
+                        $slide["gradedManually"] = $parameter_slide->gradedManually;
+                        $slide["totalGrades"] = $parameter_slide->totalGrades;
+                    } else {
+                        $slide["gradedManually"] = false;
+                        $slide["totalGrades"] = 0;
+                    }
                     array_push($slides, $slide);
                 }
             }
