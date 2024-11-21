@@ -311,6 +311,12 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
                 Route::post('projects/{project}/fetch', 'CurrikiGo\CourseController@fetchFromWordpress');
             });
 
+            // routes for TinyLxp
+            Route::group(['prefix' => 'tinylxp'], function () {
+                Route::post('projects/{project}/playlists/{playlist}/publish', 'CurrikiGo\PublishController@playlistToTinyLxp');
+                Route::post('projects/{project}/fetch', 'CurrikiGo\CourseController@fetchFromTinylxp');
+            });
+
             // Specific routes for Safari Montage.
             Route::group(['prefix' => 'safarimontage'], function () {
                 Route::post('projects/{project}/playlists/{playlist}/activities/{activity}/publish',
