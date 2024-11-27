@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\V1\CurrikiGo;
+namespace App\Http\Controllers\Api\V1\CurrikiGo;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\CurrikiGo\GetStudentResultRequest;

@@ -12,6 +12,9 @@ use App\CurrikiGo\Moodle\Playlist as MoodlePlaylist;
 use App\CurrikiGo\WordPress\Course as WordPressCourse;
 use App\CurrikiGo\WordPress\Lesson as WordPressLesson;
 use App\CurrikiGo\WordPress\Tags as WordPressTags;
+use App\CurrikiGo\TinyLxp\Course as TinyLxpCourse;
+use App\CurrikiGo\TinyLxp\Lesson as TinyLxpLesson;
+use App\CurrikiGo\TinyLxp\Tags as TinyLxpTags;
 use App\CurrikiGo\SafariMontage\EasyUpload as SafariMontageEasyUpload;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\CurrikiGo\PublishPlaylistRequest;
@@ -20,7 +23,7 @@ use App\Models\CurrikiGo\LmsSetting;
 use App\Models\Activity;
 use App\Models\Playlist;
 use App\Models\Project;
-use App\Repositories\CurrikiGo\LmsSetting\LmsSettingRepository;
+// use App\Repositories\CurrikiGo\LmsSetting\LmsSettingRepository;
 use App\Repositories\CurrikiGo\LmsSetting\LmsSettingRepositoryInterface;
 use App\Services\CurrikiGo\LMSIntegrationServiceInterface;
 use Illuminate\Http\Request;
@@ -29,6 +32,7 @@ use App\CurrikiGo\Canvas\Course as CanvasCourse;
 use App\Http\Requests\V1\CurrikiGo\CreateAssignmentRequest;
 use App\Http\Requests\V1\CurrikiGo\PublishMoodlePlaylistRequest;
 use App\Http\Requests\V1\CurrikiGo\PublishWordpressPlaylistRequest;
+use App\Http\Requests\V1\CurrikiGo\PublishTinyLxpPlaylistRequest;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -42,6 +46,7 @@ class PublishController extends Controller
      * $lmsSettingRepository
      */
     private $lmsSettingRepository;
+    private $lms;
 
     /**
      * PublishController constructor.
@@ -429,5 +434,52 @@ class PublishController extends Controller
         ], 403);
     }
 
+    /*
+    * @param PublishPlaylistRequest $publishRequest
+    * @param Project $project
+    * @param Playlist $playlist
+    * @return Json Response
+    */
+    public function playlistToTinyLxp(PublishTinyLxpPlaylistRequest $publishRequest, Project $project, Playlist $playlist)
+    {
+        if ($playlist->project_id !== $project->id) {
+            return response([
+                'errors' => ['Invalid project or playlist Id.'],
+            ], 400);
+        }
+        $authUser = auth()->user();
+        $courseId = null;
 
+        if (Gate::forUser($authUser)->allows('publish-to-lms', $project)) {
+            $data = $publishRequest->validated();
+            $lmsSetting = $this->lmsSettingRepository->find($data['setting_id']);
+            $courseObj = new TinyLxpCourse($lmsSetting);
+            $response = $courseObj->fetch($playlist);
+            $responseContent = $response->getBody()->getContents();
+            $responseContent = json_decode($responseContent);
+            if(empty($responseContent)){
+                $response = $courseObj->send($playlist, $project);
+                $responseContent = $response->getBody()->getContents();
+                $responseContent = json_decode($responseContent);
+                $courseId = $responseContent->id;
+            }else{
+                $courseId = $responseContent[0];
+                $response = $courseObj->update($playlist, $courseId);
+                $responseContent = $response->getBody()->getContents();
+                // $responseContent = json_decode($responseContent);
+            }
+            if ($response && ($response->getStatusCode() == 200 || $response->getStatusCode() == 201)) {
+                return response([
+                    'data' => $responseContent,
+                ], 200);
+            } else {
+                return response([
+                    'data' => "",
+                ], 200);
+            }
+        }
+        return response([
+            'errors' => ['You are not authorized to perform this action.'],
+        ], 403);
+    }
 }

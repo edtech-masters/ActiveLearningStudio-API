@@ -10,6 +10,7 @@ use App\CurrikiGo\Canvas\Client;
 use App\CurrikiGo\Canvas\Course as CanvasCourse;
 use App\CurrikiGo\Moodle\Course as MoodleCourse;
 use App\CurrikiGo\WordPress\Lesson as WordPressLesson;
+use App\CurrikiGo\TinyLxp\Lesson as TinyLxpLesson;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\CurrikiGo\CreateAssignmentGroupRequest;
 use App\Http\Requests\V1\CurrikiGo\CreateCourseRequest;
@@ -363,6 +364,58 @@ class CourseController extends Controller
                 foreach($outcome as $key=> $playlist){
                     $responseArray['playlists'][$key]= $playlist->title->rendered;
                 }
+            }
+            return response([
+                'project' => $responseArray,
+            ], 200);
+        }
+        return response([
+            'errors' => ['You are not authorized to perform this action.'],
+        ], 403);
+    }
+
+     /**
+     * Fetch a Course from Wordpress
+     *
+     * @urlParam project required The Id of the project Example 1
+     * @bodyParam setting_id int The Id of the LMS setting Example 1
+     *
+     * @responseFile responses/fetch-course.json
+     *
+     * @response 400 {
+     *   "errors": [
+     *     "Validation error"
+     *   ]
+     * }
+     *
+     * @response 403 {
+     *   "errors": [
+     *     "You are not authorized to perform this action."
+     *   ]
+     * }
+     *
+     * @param FetchCourseRequest $fetchRequest
+     * @param Project $project
+     * @return Response
+     */
+    public function fetchFromTinylxp(FetchCourseRequest $fetchRequest, Project $project)
+    {
+        $authUser = auth()->user();
+        $responseArray = [];
+        $responseArray['course'] = "";
+        $responseArray['courseid'] = "";
+        $responseArray['playlists'] = [];
+        if (Gate::forUser($authUser)->allows('fetch-lms-course', $project)) {
+            $data = $fetchRequest->validated();
+            $lmsSetting = $this->lmsSettingRepository->find($data['setting_id']);
+            $wordpressLesson = new TinyLxpLesson($lmsSetting);
+            $response = $wordpressLesson->fetch($project);
+            $outcome = $response->getBody()->getContents();
+            $outcome = json_decode($outcome);
+            if(!empty($outcome)){
+                $responseArray['course'] = $project->name;
+                $responseArray['courseid'] = $project->id;
+                $responseArray['playlists'] = $outcome;
             }
             return response([
                 'project' => $responseArray,
