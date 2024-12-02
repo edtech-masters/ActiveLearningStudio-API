@@ -375,7 +375,7 @@ class CourseController extends Controller
     }
 
      /**
-     * Fetch a Course from Wordpress
+     * Fetch a Course from Tinylxp
      *
      * @urlParam project required The Id of the project Example 1
      * @bodyParam setting_id int The Id of the LMS setting Example 1
@@ -408,18 +408,25 @@ class CourseController extends Controller
         if (Gate::forUser($authUser)->allows('fetch-lms-course', $project)) {
             $data = $fetchRequest->validated();
             $lmsSetting = $this->lmsSettingRepository->find($data['setting_id']);
-            $wordpressLesson = new TinyLxpLesson($lmsSetting);
-            $response = $wordpressLesson->fetch($project);
-            $outcome = $response->getBody()->getContents();
-            $outcome = json_decode($outcome);
-            if(!empty($outcome)){
-                $responseArray['course'] = $project->name;
-                $responseArray['courseid'] = $project->id;
-                $responseArray['playlists'] = $outcome;
+            if ($lmsSetting) {
+                $wordpressLesson = new TinyLxpLesson($lmsSetting);
+                $response = $wordpressLesson->fetch($project);
+                $outcome = $response->getBody()->getContents();
+                $outcome = json_decode($outcome);
+                if(!empty($outcome)){
+                    $responseArray['course'] = $project->name;
+                    $responseArray['courseid'] = $project->id;
+                    $responseArray['playlists'] = $outcome;
+                }
+                return response([
+                    'project' => $responseArray,
+                ], 200);
+            } else {
+                return response([
+                    'errors' => 'No LMS setting found by given id',
+                ], 403);
             }
-            return response([
-                'project' => $responseArray,
-            ], 200);
+            
         }
         return response([
             'errors' => ['You are not authorized to perform this action.'],
