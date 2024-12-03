@@ -4,29 +4,32 @@ namespace App\CurrikiGo\TinyLxp;
 
 use App\Models\Playlist as PlaylistModel;
 use App\Models\Project;
+use App\CurrikiGo\TinyLxp\JWTAuth;
 
 class Lesson
 {
     private $lmsSetting;
     private $client;
-    private $lmsAuthToken;
+    // private $lmsAuthToken;
 
     public function __construct($lmsSetting)
     {
         $this->lmsSetting = $lmsSetting;
         $this->client = new \GuzzleHttp\Client();
-        $this->lmsAuthToken = base64_encode($lmsSetting->lms_login_id . ":" . $lmsSetting->lms_access_token);
+        // $this->lmsAuthToken = $lmsSetting->lms_access_token;
     }
 
     public function send(PlaylistModel $playlist )
     { 
         $response = null;
+        $jwtObj = new JWTAuth($this->lmsSetting);
         $lmsHost = $this->lmsSetting->lms_url;
+        $token = $jwtObj->createToken();
         $webServiceURL = $lmsHost . "/wp-json/learnpress/v1/section/create/";
         $lessonArray = $this->playListsActivityFetchLoop($playlist);
         $response = $this->client->request('POST', $webServiceURL, [
             'headers' => [
-                'Authorization' => "Basic  " . $this->lmsAuthToken
+                'Authorization' => 'Bearer ' . $token
             ],
             'verify' => false,  // Disable SSL certificate verification,
             'json' => $lessonArray
@@ -36,11 +39,13 @@ class Lesson
 
     public function fetch(Project $project)
     {
+        $jwtObj = new JWTAuth($this->lmsSetting);
         $lmsHost = $this->lmsSetting->lms_url;
+        $token = $jwtObj->createToken();
         $webServiceURL = $lmsHost . "/wp-json/learnpress/v1/lesson/check-lesson?meta_key=lti_content_id&meta_value=". $project->id;
         $response = $this->client->request('GET', $webServiceURL, [
             'headers' => [
-                'Authorization' => "Basic  " . $this->lmsAuthToken
+                'Authorization' => 'Bearer ' . $token
             ],
             'verify' => false,  // Disable SSL certificate verification
         ]);

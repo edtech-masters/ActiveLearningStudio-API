@@ -6,19 +6,20 @@ use App\Models\Playlist as PlaylistModel;
 use GuzzleHttp;
 use App\CurrikiGo\TinyLxp\Tags;
 use App\CurrikiGo\TinyLxp\Lesson;
+use App\CurrikiGo\TinyLxp\JWTAuth;
 
 class Course
 {
     private $lmsSetting;
     private $client;
-    private $lmsAuthToken;
+    private $jwtObj;
     private $lessonObj;
 
     public function __construct($lmsSetting)
     {
         $this->lmsSetting = $lmsSetting;
         $this->client = new GuzzleHttp\Client();
-        $this->lmsAuthToken = base64_encode($lmsSetting->lms_login_id . ":" . $lmsSetting->lms_access_token);
+        $this->jwtObj = new JWTAuth($this->lmsSetting);
         $this->lessonObj = new Lesson($lmsSetting);
     }
 
@@ -26,15 +27,7 @@ class Course
     {
         $lmsHost = $this->lmsSetting->lms_url;
         $webServiceURL = $lmsHost . "/wp-json/learnpress/v1/course/create"; // web service endpoint
-        // $requestParams = [
-        //     "post_title" => $playlist->project->name,
-        //     "status" => "publish",
-        //     "content" => $playlist->project->description,
-        //     "post_type" => "lp_course",
-        //     'post_meta' => [ 'key' => 'lti_content_id', 'value' => $playlist->project->id],
-        //     'terms' => $this->getCourseCategoryAndTags($playlist),
-        //     'sections' => $this->lessonObj->playListsActivityFetchLoop($playlist) // section must be attached -> loop run on sections
-        // ];
+        $token = $this->jwtObj->createToken();
         $fileName = basename(parse_url($playlist->project->thumb_url, PHP_URL_PATH));//pexels-photo-593158.jpeg
         $thumbnailData = [
             'name'     => ((@file_get_contents($playlist->project->thumb_url) == '') || ($fileName == 'pexels-photo-593158.jpeg')) ? 'no_thumbnail' : 'course_thumbnail',
@@ -44,7 +37,7 @@ class Course
 
         $response = $this->client->request('POST', $webServiceURL, [
             'headers' => [
-                'Authorization' => "Basic  " . $this->lmsAuthToken,
+                'Authorization' => 'Bearer ' . $token,
                 'Accept'        => 'application/json',
             ],
             'verify' => false, // Disable SSL certificate verification
@@ -59,18 +52,13 @@ class Course
                 $thumbnailData,
             ],
         ]);
-        // $response = $this->client->request('POST', $webServiceURL, [
-        //     'headers' => [
-        //         'Authorization' => "Basic  " . $this->lmsAuthToken
-        //     ],
-        //     'verify' => false,  // Disable SSL certificate verification,
-        //     'json' => $requestParams
-        // ]);
+        
         return $response;
     }
 
     public function update(PlaylistModel $playlist, $projectId)
     {        
+        $token = $this->jwtObj->createToken();
         $lmsHost = $this->lmsSetting->lms_url;
         $webServiceURL = $lmsHost . "/wp-json/learnpress/v1/course/update/" . $projectId;
         $requestParams = [
@@ -82,7 +70,7 @@ class Course
 
         $response = $this->client->request('POST', $webServiceURL, [
         'headers' => [
-            'Authorization' => "Basic  " . $this->lmsAuthToken
+            'Authorization' => 'Bearer ' . $token
         ],
         'verify' => false,  // Disable SSL certificate verification,
         'json' => $requestParams
@@ -92,12 +80,13 @@ class Course
 
     public function fetch(PlaylistModel $playlist)
     {        
+        $token = $this->jwtObj->createToken();
         $lmsHost = $this->lmsSetting->lms_url;
         $webServiceURL = $lmsHost . "/wp-json/learnpress/v1/course/check-course?meta_key=lti_content_id&meta_value=". $playlist->project->id;
         
         $response = $this->client->request('GET', $webServiceURL, [
             'headers' => [
-                'Authorization' => "Basic " . $this->lmsAuthToken,
+                'Authorization' => 'Bearer ' . $token
             ],
             'verify' => false,  // Disable SSL certificate verification
         ]);
