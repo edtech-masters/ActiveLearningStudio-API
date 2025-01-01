@@ -434,8 +434,16 @@ class PublishController extends Controller
         ], 403);
     }
 
-    /*
-    * @param PublishPlaylistRequest $publishRequest
+    /**
+    * Publish Playlist to Wordpress
+    *
+    * Publish the specified playlist to Wordpress.
+    *
+    * @urlParam project required The Id of the project Example: 1
+    * @urlParam playlist required The Id of the playlist Example: 1
+    * @bodyParam setting_id int The Id of the LMS setting Example: 1
+    *
+    * @param PublishTinyLxpPlaylistRequest $publishRequest
     * @param Project $project
     * @param Playlist $playlist
     * @return Json Response
@@ -457,16 +465,13 @@ class PublishController extends Controller
             $response = $courseObj->fetch($playlist);
             $responseContent = $response->getBody()->getContents();
             $responseContent = json_decode($responseContent);
-            if(empty($responseContent)){
+            if (empty($responseContent)) {
                 $response = $courseObj->send($playlist, $project);
                 $responseContent = $response->getBody()->getContents();
-                $responseContent = json_decode($responseContent);
-                $courseId = $responseContent->id;
-            }else{
+            } else {
                 $courseId = $responseContent[0];
                 $response = $courseObj->update($playlist, $courseId);
                 $responseContent = $response->getBody()->getContents();
-                // $responseContent = json_decode($responseContent);
             }
             if ($response && ($response->getStatusCode() == 200 || $response->getStatusCode() == 201)) {
                 return response([
