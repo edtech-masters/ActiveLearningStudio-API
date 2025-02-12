@@ -386,6 +386,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
     // LTI Playlist
     Route::get('playlists/{playlist}/lti', 'PlaylistController@loadLti');
     // xAPI Statments
+    Route::get('xapi/statements', 'XapiController@fetchStatement');
     Route::post('xapi/statements', 'XapiController@saveStatement');
     // Google Classroom Student workflow
     Route::get('independent-activities/{independent_activity}/h5p-resource-settings', 'IndependentActivityController@getH5pResourceSettings');
