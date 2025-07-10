@@ -91,6 +91,13 @@ class Context implements VersionableInterface, ComparableInterface
     public function getTeam() { return $this->team; }
 
     public function setContextActivities($value) {
+        // there was an issue to save a specific question xapi
+        // after apply below code the xapi start to save successfully
+        $activeLrs = config('xapi.active_lrs');
+        if (isset($activeLrs) && $activeLrs == 'sql_lrs' && isset($value['parent'][0]['id'])) {
+            $parentId = $value['parent'][0]['id'];
+            $value['parent'][0]['id'] = explode('?', $parentId)[0];
+        }
         if (! $value instanceof ContextActivities) {
             $value = new ContextActivities($value);
         }

@@ -45,28 +45,18 @@ class XapiController extends Controller
         try {
             if (isset($activeLrs) && $activeLrs == 'sql_lrs') {
                 $service = new SqlrsService();
-                $response = $service->saveStatement($data['statement']);
-                if (isset($response[0])) {
-                    $response = [
-                        "id" => $response[0]  // Use the first element of the array
-                    ];
-                    return response( $response, 201 );
-                } else {
-                    return response( $response, 500 );
-                }
             } else {
                 $service = new LearnerRecordStoreService();
-                $response = $service->saveStatement($data['statement']);
-                if ($response->success) {
-                    return response([
-                        'id' => $response->content->getId(),
-                    ], 201);
-                }
-                else {
-                    return response([
-                        'errors' => ["Error: " . $response->content],
-                    ], 500);
-                }
+            }
+            $response = $service->saveStatement($data['statement']);
+            if ($response->success) {
+                return response([
+                    'id' => $response->content->getId(),
+                ], 201);
+            } else {
+                return response([
+                    'errors' => ["Error: " . $response->content],
+                ], 500);
             }
         } catch (\Exception $e) {
             return response([
