@@ -7,8 +7,8 @@ php /var/www/html/artisan storage:link
 # php /var/www/html/artisan migrate --force
 
 #New Relilc
-nr_enabled=$(printenv ENABLE_NR);
-if [ "$nr_enabled" -eq "1" ]; then
+nr_enabled=$(printenv ENABLE_NR)
+if [ "$nr_enabled" = "1" ]; then
   export NR_INSTALL_SILENT=true
   export NR_INSTALL_KEY=$(printenv NR_INSTALL_KEY)
   export nr_name=$(printenv NR_NAME)
@@ -19,6 +19,7 @@ fi
 # h5p_branch=$(printenv H5P_BRANCH);
 # git clone -b $h5p_branch https://github.com/ActiveLearningStudio/H5P.Distribution.git /tmp/h5p-dist
 
+git config --global --add safe.directory /var/www/html
 cd /var/www/html && git log --graph -10 --decorate --pretty > /var/www/html/public/log.txt
 # cp -rf /tmp/h5p-dist/* /var/www/html/storage/app/public/h5p/
 # chmod 777 -R /var/www/html/storage &
